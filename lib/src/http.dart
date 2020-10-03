@@ -16,7 +16,6 @@ import 'dart:convert';
 
 import 'package:path/path.dart';
 import 'package:pool/pool.dart';
-import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
@@ -149,8 +148,7 @@ Future<_Response> _sendRequest(
     if (cookies != null && cookies.length > 0)
       ioRequest.cookies.addAll(cookies);
 
-    HttpClientResponse res =
-        await stream.pipe(DelegatingStreamConsumer.typed(ioRequest));
+    HttpClientResponse res = await stream.cast().pipe(ioRequest);
     var headers = <String, String>{};
     res.headers.forEach((key, values) {
       headers[key] = values.join(',');
@@ -158,7 +156,7 @@ Future<_Response> _sendRequest(
 
     return _Response(
       http.StreamedResponse(
-        DelegatingStream.typed<List<int>>(res).handleError(
+        res.cast<List<int>>().handleError(
             (error) => throw http.ClientException(error.message, error.uri),
             test: (error) => error is HttpException),
         res.statusCode,
@@ -204,7 +202,7 @@ class Cookies {
   }
 
   List<Cookie> _cookies;
-  Map<String, List<Cookies>> _sessions;
+  //Map<String, List<Cookies>> _sessions; // TODO: Sessions
   File path;
 
   Future<void> _initCookies() async {
